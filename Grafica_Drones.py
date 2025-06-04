@@ -5,7 +5,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import animation
 from mpl_toolkits.mplot3d import Axes3D
 import os
-
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 ctk.set_appearance_mode("dark")  # Solo modo oscuro
 ruts_multiples = []
@@ -104,6 +105,19 @@ def obtener_ecuacion_elipse(h, k, a, b, orientacion):
         eq = f"((x - {h})² / {b**2}) + ((y - {k})² / {a**2}) = 1"
     return eq
 
+def renderizar_latex(enunciado, parent_frame, ancho=6.5, alto=1, fontsize=14):
+    fig = Figure(figsize=(ancho, alto), dpi=100, facecolor='none')
+    ax = fig.add_subplot(111)
+    ax.set_facecolor("none")  # Sin fondo en el área del gráfico
+    ax.axis("off")
+
+    ax.text(0.5, 0.5, f"${enunciado}$", fontsize=fontsize, ha='center', va='center', color='white')
+
+    canvas = FigureCanvasTkAgg(fig, master=parent_frame)
+    canvas.draw()
+    widget = canvas.get_tk_widget()
+    widget.config(bg="#1a1a1a", highlightthickness=0)  # Combina con el fondo oscuro
+    widget.pack(pady=5)
 
 
 def animar_multiples_trayectorias(master_frame):
@@ -247,44 +261,50 @@ def procesar():
 
 def obtener_ecuaciones_elipse(h, k, a, b, orientacion):
     if orientacion == 'horizontal':
-        canonica = f"((x - {h})² / {a**2}) + ((y - {k})² / {b**2}) = 1"
-        # Expansión general
+        canonica = (
+            f"\\frac{{(x - {h})^2}}{{{a**2}}} + \\frac{{(y - {k})^2}}{{{b**2}}} = 1"
+        )
         A = 1 / a**2
         C = 1 / b**2
     else:
-        canonica = f"((x - {h})² / {b**2}) + ((y - {k})² / {a**2}) = 1"
+        canonica = (
+            f"\\frac{{(x - {h})^2}}{{{b**2}}} + \\frac{{(y - {k})^2}}{{{a**2}}} = 1"
+        )
         A = 1 / b**2
         C = 1 / a**2
-
-    # Expandimos (x - h)^2 y (y - k)^2:
-    # A*(x² - 2hx + h²) + C*(y² - 2ky + k²) = 1
-    # => Ax² + Cy² - 2Ahx - 2Cky + Ah² + Ck² - 1 = 0
 
     D = -2 * A * h
     E = -2 * C * k
     F = A * h**2 + C * k**2 - 1
 
-    general = f"{A:.4f}x² + {C:.4f}y² + ({D:.4f})x + ({E:.4f})y + ({F:.4f}) = 0"
+    general = (
+        f"{A:.4f}x^2 + {C:.4f}y^2 + ({D:.4f})x + ({E:.4f})y + ({F:.4f}) = 0"
+    )
+
     return canonica, general
+
 
 def mostrar_ventana_ecuaciones(rut, h, k, a, b, orientacion):
     canonica, general = obtener_ecuaciones_elipse(h, k, a, b, orientacion)
 
     ventana = ctk.CTkToplevel()
     ventana.title("Ecuaciones de la Elipse")
-    ventana.geometry("520x270")
+    ventana.geometry("750x400")
     ventana.resizable(False, False)
 
     ctk.CTkLabel(ventana, text="📐 Ecuaciones de la Elipse", font=("Arial", 16, "bold")).pack(pady=5)
-    ctk.CTkLabel(ventana, text=f"🔢 RUT: {rut}", font=("Arial", 13)).pack(pady=2)
+    ctk.CTkLabel(ventana, text=f"🔢 RUT: {rut}", font=("Arial", 13)).pack(pady=5)
 
+    # ---------- Mostrar ecuación canónica con fracciones ----------
     ctk.CTkLabel(ventana, text="🟦 Ecuación Canónica:", font=("Arial", 14, "bold")).pack()
-    ctk.CTkLabel(ventana, text=canonica, font=("Consolas", 13), wraplength=480).pack(pady=5)
-    
+    renderizar_latex(canonica, ventana)
+
+    # ---------- Mostrar ecuación general (formato LaTeX) ----------
     ctk.CTkLabel(ventana, text="🟥 Ecuación General:", font=("Arial", 14, "bold")).pack()
-    ctk.CTkLabel(ventana, text=general, font=("Consolas", 13), wraplength=480).pack(pady=5)
+    renderizar_latex(general, ventana)
 
     ctk.CTkButton(ventana, text="Cerrar", command=ventana.destroy).pack(pady=10)
+
 
 
 def elipses_colisionan(params1, params2):
