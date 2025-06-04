@@ -243,6 +243,48 @@ def procesar():
 
 
     animar_elipse_2d_3d_embebida(h, k, a, b, orientacion, frame_animacion)
+    mostrar_ventana_ecuaciones(rut, h, k, a, b, orientacion)
+
+def obtener_ecuaciones_elipse(h, k, a, b, orientacion):
+    if orientacion == 'horizontal':
+        canonica = f"((x - {h})² / {a**2}) + ((y - {k})² / {b**2}) = 1"
+        # Expansión general
+        A = 1 / a**2
+        C = 1 / b**2
+    else:
+        canonica = f"((x - {h})² / {b**2}) + ((y - {k})² / {a**2}) = 1"
+        A = 1 / b**2
+        C = 1 / a**2
+
+    # Expandimos (x - h)^2 y (y - k)^2:
+    # A*(x² - 2hx + h²) + C*(y² - 2ky + k²) = 1
+    # => Ax² + Cy² - 2Ahx - 2Cky + Ah² + Ck² - 1 = 0
+
+    D = -2 * A * h
+    E = -2 * C * k
+    F = A * h**2 + C * k**2 - 1
+
+    general = f"{A:.4f}x² + {C:.4f}y² + ({D:.4f})x + ({E:.4f})y + ({F:.4f}) = 0"
+    return canonica, general
+
+def mostrar_ventana_ecuaciones(rut, h, k, a, b, orientacion):
+    canonica, general = obtener_ecuaciones_elipse(h, k, a, b, orientacion)
+
+    ventana = ctk.CTkToplevel()
+    ventana.title("Ecuaciones de la Elipse")
+    ventana.geometry("520x270")
+    ventana.resizable(False, False)
+
+    ctk.CTkLabel(ventana, text="📐 Ecuaciones de la Elipse", font=("Arial", 16, "bold")).pack(pady=5)
+    ctk.CTkLabel(ventana, text=f"🔢 RUT: {rut}", font=("Arial", 13)).pack(pady=2)
+
+    ctk.CTkLabel(ventana, text="🟦 Ecuación Canónica:", font=("Arial", 14, "bold")).pack()
+    ctk.CTkLabel(ventana, text=canonica, font=("Consolas", 13), wraplength=480).pack(pady=5)
+    
+    ctk.CTkLabel(ventana, text="🟥 Ecuación General:", font=("Arial", 14, "bold")).pack()
+    ctk.CTkLabel(ventana, text=general, font=("Consolas", 13), wraplength=480).pack(pady=5)
+
+    ctk.CTkButton(ventana, text="Cerrar", command=ventana.destroy).pack(pady=10)
 
 
 def elipses_colisionan(params1, params2):
@@ -323,6 +365,7 @@ boton_simular_multiples = ctk.CTkButton(master=frame, text="Simular Múltiples T
                                         command=lambda: animar_multiples_trayectorias(frame_animacion),
                                         fg_color="#aa3e98", hover_color="#c758b1", text_color="#ffffff")
 boton_simular_multiples.pack(pady=5)
+
 
 
 frame_animacion = ctk.CTkFrame(master=frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
