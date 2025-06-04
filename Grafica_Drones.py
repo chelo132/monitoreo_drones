@@ -97,6 +97,14 @@ def agregar_rut():
     ruts_multiples.append(rut)
     resultado.configure(text=f"✅ RUT agregado: {rut}")
 
+def obtener_ecuacion_elipse(h, k, a, b, orientacion):
+    if orientacion == 'horizontal':
+        eq = f"((x - {h})² / {a**2}) + ((y - {k})² / {b**2}) = 1"
+    else:
+        eq = f"((x - {h})² / {b**2}) + ((y - {k})² / {a**2}) = 1"
+    return eq
+
+
 
 def animar_multiples_trayectorias(master_frame):
     global canvas, ani
@@ -214,6 +222,9 @@ def procesar():
     resultado.configure(
         text=f"Grupo {grupo_tipo} (d8 = {grupo_valor}) | Centro: ({h},{k}), a = {a}, b = {b}, orientación {orientacion}"
     )
+    ecuacion = obtener_ecuacion_elipse(h, k, a, b, orientacion)
+    label_ecuacion.configure(text=f"Ecuación canónica:\n{ecuacion}")
+
 
     animar_elipse_2d_3d_embebida(h, k, a, b, orientacion, frame_animacion)
 
@@ -277,6 +288,10 @@ boton_generar.pack(pady=10)
 
 resultado = ctk.CTkLabel(master=frame, text="", font=("Arial", 14), text_color="#d0f0fd")
 resultado.pack(pady=5)
+
+label_ecuacion = ctk.CTkLabel(master=frame, text="", font=("Arial", 14), text_color="#d0f0fd", wraplength=800, justify="center")
+label_ecuacion.pack(pady=5)
+
 
 boton_agregar_rut = ctk.CTkButton(master=frame, text="Agregar RUT a la Lista", command=agregar_rut,
                                   fg_color="#1c7c54", hover_color="#239b66", text_color="#ffffff")
