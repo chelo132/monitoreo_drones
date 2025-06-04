@@ -210,6 +210,22 @@ def animar_multiples_trayectorias(master_frame):
 
     ani = animation.FuncAnimation(fig, update, frames=300, interval=20, blit=True)
 
+def mostrar_ventana_creditos():
+    ventana = ctk.CTkToplevel()
+    ventana.title("Créditos del Proyecto")
+    ventana.geometry("400x300")
+    ventana.resizable(False, False)
+
+    ctk.CTkLabel(ventana, text=" Proyecto: Modelado de Trayectorias de Drones", font=("Arial", 16, "bold")).pack(pady=10)
+
+    ctk.CTkLabel(ventana, text="Integrantes:", font=("Arial", 14, "bold")).pack()
+    ctk.CTkLabel(ventana, text=" Marcelo Matamala\n• Catalina Vergara\n• Francisco Benavides\n• José Sáez", font=("Arial", 13)).pack(pady=5)
+
+    ctk.CTkLabel(ventana, text=" Profesor: Gabriel Sandoval", font=("Arial", 13)).pack(pady=5)
+    ctk.CTkLabel(ventana, text=" Asignatura: MAT1186 - Introducción al Cálculo", font=("Arial", 13)).pack(pady=5)
+
+    ctk.CTkButton(ventana, text="Cerrar", command=ventana.destroy).pack(pady=10)
+
 
 def procesar():
     rut = entry_rut.get()
@@ -261,7 +277,7 @@ def cerrar_programa():
 
 root = ctk.CTk()
 root.title("Simulador de Trayectorias de Drones")
-root.geometry("900x700")
+root.geometry("900x800")
 
 frame = ctk.CTkFrame(master=root, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
 frame.pack(pady=10, padx=10, fill="both", expand=True)
@@ -291,6 +307,12 @@ resultado.pack(pady=5)
 
 label_ecuacion = ctk.CTkLabel(master=frame, text="", font=("Arial", 14), text_color="#d0f0fd", wraplength=800, justify="center")
 label_ecuacion.pack(pady=5)
+
+boton_creditos = ctk.CTkButton(master=frame, text="Créditos del Proyecto",
+                               command=mostrar_ventana_creditos,
+                               fg_color="#444", hover_color="#666", text_color="#fff")
+boton_creditos.pack(pady=10)
+
 
 
 boton_agregar_rut = ctk.CTkButton(master=frame, text="Agregar RUT a la Lista", command=agregar_rut,
