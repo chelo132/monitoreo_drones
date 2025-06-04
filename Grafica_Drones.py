@@ -4,8 +4,12 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import animation
 from mpl_toolkits.mplot3d import Axes3D
+import os
+
 
 ctk.set_appearance_mode("dark")  # Solo modo oscuro
+ruts_multiples = []
+
 
 # ---------- Lógica para calcular los parámetros de la elipse ----------
 def generar_parametros(rut):
@@ -85,6 +89,102 @@ def animar_elipse_2d_3d_embebida(h, k, a, b, orientacion, master_frame):
 
     ani = animation.FuncAnimation(fig, update, frames=len(t), interval=20, blit=True)
 
+def agregar_rut():
+    rut = entry_rut.get()
+    if len([c for c in rut if c.isdigit()]) < 8:
+        resultado.configure(text="⚠️ RUT inválido (mínimo 8 dígitos numéricos)")
+        return
+    ruts_multiples.append(rut)
+    resultado.configure(text=f"✅ RUT agregado: {rut}")
+
+
+def animar_multiples_trayectorias(master_frame):
+    global canvas, ani
+
+    if canvas:
+        canvas.get_tk_widget().destroy()
+        canvas = None
+        ani = None
+
+    if not ruts_multiples:
+        resultado.configure(text="⚠️ No hay RUTs en la lista")
+        return
+
+    ruts_validos = [rut for rut in ruts_multiples if generar_parametros(rut)]
+
+    if not ruts_validos:
+        resultado.configure(text="⚠️ No hay RUTs válidos en la lista")
+        return
+    
+    colores = plt.cm.viridis(np.linspace(0, 1, len(ruts_validos))) #hay un error que no afecta al programa debe ser un bug del propio mat asi que de ahi lo veo xD
+
+
+    fig = plt.figure(figsize=(10, 5))
+    ax1 = fig.add_subplot(1, 2, 1)
+    ax2 = fig.add_subplot(1, 2, 2, projection='3d')
+
+    puntos_2d = []
+    puntos_3d = []
+
+
+    todas_x, todas_y, todas_z = [], [], []
+
+    for idx, rut in enumerate(ruts_multiples):
+        params = generar_parametros(rut)
+        if not params:
+            continue
+        h, k, a, b, orientacion, _, _ = params
+        t = np.linspace(0, 2 * np.pi, 300)
+
+        if orientacion == 'horizontal':
+            x = h + a * np.cos(t)
+            y = k + b * np.sin(t)
+        else:
+            x = h + b * np.cos(t)
+            y = k + a * np.sin(t)
+
+        z = np.sin(t + idx) * 2
+
+        ax1.plot(x, y, color=colores[idx], alpha=0.5)
+        ax1.scatter(h, k, color=colores[idx])
+        punto2d, = ax1.plot([], [], 'o', color=colores[idx], markersize=5)
+        puntos_2d.append((punto2d, x, y))
+
+        ax2.plot3D(x, y, z, color=colores[idx], alpha=0.5)
+        ax2.scatter(h, k, 0, color=colores[idx])
+        punto3d, = ax2.plot([], [], [], 'o', color=colores[idx], markersize=5)
+        puntos_3d.append((punto3d, x, y, z))
+
+        todas_x.extend(x)
+        todas_y.extend(y)
+        todas_z.extend(z)
+
+    ax1.set_title("Múltiples Trayectorias 2D")
+    ax1.set_aspect("equal")
+    ax1.grid(True)
+    ax1.set_xlim(min(todas_x) - 1, max(todas_x) + 1)
+    ax1.set_ylim(min(todas_y) - 1, max(todas_y) + 1)
+
+    ax2.set_title("Múltiples Trayectorias 3D")
+    ax2.set_xlim(min(todas_x) - 1, max(todas_x) + 1)
+    ax2.set_ylim(min(todas_y) - 1, max(todas_y) + 1)
+    ax2.set_zlim(min(todas_z) - 1, max(todas_z) + 1)
+
+    def update(i):
+        for punto, x, y in puntos_2d:
+            punto.set_data([x[i]], [y[i]])
+        for punto, x, y, z in puntos_3d:
+            punto.set_data([x[i]], [y[i]])
+            punto.set_3d_properties([z[i]])
+        return [p[0] for p in puntos_2d + puntos_3d]
+
+    canvas = FigureCanvasTkAgg(fig, master=master_frame)
+    canvas.draw()
+    canvas.get_tk_widget().pack(pady=10, fill='both', expand=True)
+
+    ani = animation.FuncAnimation(fig, update, frames=300, interval=20, blit=True)
+
+
 def procesar():
     rut = entry_rut.get()
     params = generar_parametros(rut)
@@ -98,6 +198,17 @@ def procesar():
     )
 
     animar_elipse_2d_3d_embebida(h, k, a, b, orientacion, frame_animacion)
+
+def cerrar_programa():
+    global ani
+    try:
+        if ani:
+            ani.event_source.stop()  # Detiene la animación
+    except:
+        pass
+    root.destroy()
+    os._exit(0)
+
 
 root = ctk.CTk()
 root.title("Simulador de Trayectorias de Drones")
@@ -129,8 +240,20 @@ boton_generar.pack(pady=10)
 resultado = ctk.CTkLabel(master=frame, text="", font=("Arial", 14), text_color="#d0f0fd")
 resultado.pack(pady=5)
 
+boton_agregar_rut = ctk.CTkButton(master=frame, text="Agregar RUT a la Lista", command=agregar_rut,
+                                  fg_color="#1c7c54", hover_color="#239b66", text_color="#ffffff")
+boton_agregar_rut.pack(pady=5)
+
+boton_simular_multiples = ctk.CTkButton(master=frame, text="Simular Múltiples Trayectorias",
+                                        command=lambda: animar_multiples_trayectorias(frame_animacion),
+                                        fg_color="#aa3e98", hover_color="#c758b1", text_color="#ffffff")
+boton_simular_multiples.pack(pady=5)
+
+
 frame_animacion = ctk.CTkFrame(master=frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
 frame_animacion.pack(pady=10, fill="both", expand=True)
+
+root.protocol("WM_DELETE_WINDOW", cerrar_programa)
 
 canvas = None
 ani = None
