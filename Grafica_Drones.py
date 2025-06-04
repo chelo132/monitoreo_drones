@@ -118,6 +118,23 @@ def animar_multiples_trayectorias(master_frame):
     
     colores = plt.cm.viridis(np.linspace(0, 1, len(ruts_validos))) #hay un error que no afecta al programa debe ser un bug del propio mat asi que de ahi lo veo xD
 
+    # Detectar colisiones entre pares de elipses
+    colisiones = []
+    for i in range(len(ruts_validos)):
+        for j in range(i + 1, len(ruts_validos)):
+            p1 = generar_parametros(ruts_validos[i])
+            p2 = generar_parametros(ruts_validos[j])
+            if elipses_colisionan(p1, p2):
+                colisiones.append((ruts_validos[i], ruts_validos[j]))
+
+    if colisiones:
+        mensaje = "⚠️ Colisión detectada entre:\n" + "\n".join(
+            [f"→ {a} y {b}" for a, b in colisiones]
+        )
+        resultado.configure(text=mensaje)
+    else:
+        resultado.configure(text="✅ Sin colisiones detectadas entre trayectorias.")
+
 
     fig = plt.figure(figsize=(10, 5))
     ax1 = fig.add_subplot(1, 2, 1)
@@ -198,6 +215,26 @@ def procesar():
     )
 
     animar_elipse_2d_3d_embebida(h, k, a, b, orientacion, frame_animacion)
+
+
+def elipses_colisionan(params1, params2):
+    h1, k1, a1, b1, orient1, *_ = params1
+    h2, k2, a2, b2, orient2, *_ = params2
+
+    # Distancia entre centros
+    distancia = np.sqrt((h2 - h1) ** 2 + (k2 - k1) ** 2)
+
+    # Radio de seguridad depende de la orientación
+    if orient1 == 'horizontal' and orient2 == 'horizontal':
+        radio_seguridad = a1 + a2
+    elif orient1 == 'vertical' and orient2 == 'vertical':
+        radio_seguridad = b1 + b2
+    else:
+        # Si son diferentes, usar una combinación de ambos
+        radio_seguridad = max(a1, b1) + max(a2, b2)
+
+    return distancia < radio_seguridad
+
 
 def cerrar_programa():
     global ani
