@@ -116,7 +116,8 @@ def animar_multiples_trayectorias(master_frame):
         resultado.configure(text="⚠️ No hay RUTs válidos en la lista")
         return
     
-    colores = plt.cm.viridis(np.linspace(0, 1, len(ruts_validos))) #hay un error que no afecta al programa debe ser un bug del propio mat asi que de ahi lo veo xD
+    colormap = plt.get_cmap('viridis')
+    colores = colormap(np.linspace(0, 1, len(ruts_validos))) #hay un error que no afecta al programa debe ser un bug del propio mat asi que de ahi lo veo xD
 
     # Detectar colisiones entre pares de elipses
     colisiones = []
