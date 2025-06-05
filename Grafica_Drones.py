@@ -102,6 +102,9 @@ def agregar_rut():
         return
     ruts_multiples.append(rut)
     resultado.configure(text=f"✅ RUT agregado: {rut}")
+    lista_ruts.configure(state="normal")
+    lista_ruts.insert("end", rut + "\n")
+    lista_ruts.configure(state="disabled")
 
 def obtener_ecuacion_elipse(h, k, a, b, orientacion):
     if orientacion == 'horizontal':
@@ -113,7 +116,7 @@ def obtener_ecuacion_elipse(h, k, a, b, orientacion):
 def renderizar_latex(enunciado, parent_frame, ancho=6.5, alto=1, fontsize=14):
     fig = Figure(figsize=(ancho, alto), dpi=100, facecolor='none')
     ax = fig.add_subplot(111)
-    ax.set_facecolor("none")  # Sin fondo en el área del gráfico
+    ax.set_facecolor("none")  
     ax.axis("off")
 
     ax.text(0.5, 0.5, f"${enunciado}$", fontsize=fontsize, ha='center', va='center', color='white')
@@ -121,7 +124,7 @@ def renderizar_latex(enunciado, parent_frame, ancho=6.5, alto=1, fontsize=14):
     canvas = FigureCanvasTkAgg(fig, master=parent_frame)
     canvas.draw()
     widget = canvas.get_tk_widget()
-    widget.config(bg="#1a1a1a", highlightthickness=0)  # Combina con el fondo oscuro
+    widget.config(bg="#1a1a1a", highlightthickness=0) 
     widget.pack(pady=5)
 
 
@@ -359,12 +362,6 @@ def elipses_colisionan(p1, p2, steps=300):
 
     return False
 
-
-    
-
-
-
-
 def cerrar_programa():
     global ani
     try:
@@ -383,11 +380,17 @@ root.geometry("900x800")
 frame = ctk.CTkFrame(master=root, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
 frame.pack(pady=10, padx=10, fill="both", expand=True)
 
-titulo = ctk.CTkLabel(master=frame, text="Modelador de Trayectorias de Drones", font=("Arial", 24), text_color="#d0f0fd")
+container_frame = ctk.CTkFrame(master=frame, fg_color="#121212", corner_radius=10, border_width=0)
+container_frame.pack(pady=10, padx=10, fill="x", expand=False)
+
+left_frame = ctk.CTkFrame(master=container_frame, fg_color="#121212", corner_radius=10, border_width=0)
+left_frame.pack(side="left", fill="y", expand=False, padx=(0, 10))
+
+titulo = ctk.CTkLabel(master=left_frame, text="Modelador de Trayectorias de Drones", font=("Arial", 24), text_color="#d0f0fd")
 titulo.pack(pady=10)
 
 entry_rut = ctk.CTkEntry(
-    master=frame,
+    master=left_frame,
     placeholder_text="Ingresa RUT (ej: 12.345.678-9)",
     width=400,
     height=45,
@@ -399,32 +402,43 @@ entry_rut = ctk.CTkEntry(
 )
 entry_rut.pack(pady=10)
 
-boton_generar = ctk.CTkButton(master=frame, text="Generar y Animar Trayectoria", command=procesar,
+boton_generar = ctk.CTkButton(master=left_frame, text="Generar y Animar Trayectoria", command=procesar,
                               fg_color="#0d6f8f", hover_color="#1282a2", text_color="#d0f0fd")
 boton_generar.pack(pady=10)
 
-resultado = ctk.CTkLabel(master=frame, text="", font=("Arial", 14), text_color="#d0f0fd")
+resultado = ctk.CTkLabel(master=left_frame, text="", font=("Arial", 14), text_color="#d0f0fd")
 resultado.pack(pady=5)
 
-label_ecuacion = ctk.CTkLabel(master=frame, text="", font=("Arial", 14), text_color="#d0f0fd", wraplength=800, justify="center")
+label_ecuacion = ctk.CTkLabel(master=left_frame, text="", font=("Arial", 14), text_color="#d0f0fd", wraplength=800, justify="center")
 label_ecuacion.pack(pady=5)
 
-boton_creditos = ctk.CTkButton(master=frame, text="Créditos del Proyecto",
+boton_creditos = ctk.CTkButton(master=left_frame, text="Créditos del Proyecto",
                                command=mostrar_ventana_creditos,
                                fg_color="#444", hover_color="#666", text_color="#fff")
 boton_creditos.pack(pady=10)
 
 
 
-boton_agregar_rut = ctk.CTkButton(master=frame, text="Agregar RUT a la Lista", command=agregar_rut,
+boton_agregar_rut = ctk.CTkButton(master=left_frame, text="Agregar RUT a la Lista", command=agregar_rut,
                                   fg_color="#1c7c54", hover_color="#239b66", text_color="#ffffff")
 boton_agregar_rut.pack(pady=5)
 
-boton_simular_multiples = ctk.CTkButton(master=frame, text="Simular Múltiples Trayectorias",
+boton_simular_multiples = ctk.CTkButton(master=left_frame, text="Simular Múltiples Trayectorias",
                                         command=lambda: animar_multiples_trayectorias(frame_animacion),
                                         fg_color="#aa3e98", hover_color="#c758b1", text_color="#ffffff")
+
 boton_simular_multiples.pack(pady=5)
 
+
+right_frame = ctk.CTkFrame(master=container_frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
+right_frame = ctk.CTkFrame(master=container_frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
+right_frame.pack(side="left", fill="both", expand=True)
+
+ctk.CTkLabel(master=right_frame, text="RUTs Agregados", font=("Arial", 18), text_color="#d0f0fd").pack(pady=10)
+
+lista_ruts = ctk.CTkTextbox(master=right_frame, width=300, height=300, font=("Arial", 14), fg_color="#1a1a1a", text_color="#d0f0fd")
+lista_ruts.pack(padx=10, pady=10, fill="both", expand=True)
+lista_ruts.configure(state="disabled")
 
 
 frame_animacion = ctk.CTkFrame(master=frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
