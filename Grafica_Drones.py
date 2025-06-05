@@ -148,12 +148,18 @@ def animar_multiples_trayectorias(master_frame):
 
     # Detectar colisiones entre pares de elipses
     colisiones = []
+    ruts_en_colision = set()
+
     for i in range(len(ruts_validos)):
         for j in range(i + 1, len(ruts_validos)):
             p1 = generar_parametros(ruts_validos[i])
             p2 = generar_parametros(ruts_validos[j])
             if elipses_colisionan(p1, p2):
                 colisiones.append((ruts_validos[i], ruts_validos[j]))
+                ruts_en_colision.add(ruts_validos[i])
+                ruts_en_colision.add(ruts_validos[j])
+
+
 
     if colisiones:
         mensaje = "⚠️ Colisión detectada entre:\n" + "\n".join(
@@ -174,7 +180,7 @@ def animar_multiples_trayectorias(master_frame):
 
     todas_x, todas_y, todas_z = [], [], []
 
-    for idx, rut in enumerate(ruts_multiples):
+    for idx, rut in enumerate(ruts_validos):
         params = generar_parametros(rut)
         if not params:
             continue
@@ -190,19 +196,30 @@ def animar_multiples_trayectorias(master_frame):
 
         z = np.sin(t + idx) * 2
 
-        ax1.plot(x, y, color=colores[idx], alpha=0.5)
-        ax1.scatter(h, k, color=colores[idx])
-        punto2d, = ax1.plot([], [], 'o', color=colores[idx], markersize=5)
+        # 🎨 Elegimos el color según colisión
+        if rut in ruts_en_colision:
+            # Matiz si termina en número impar
+            alpha = 0.8 if int(rut[-1]) % 2 == 0 else 0.5
+            color = (1, 0, 0, alpha)  # rojo con transparencia
+        else:
+            color = "limegreen"
+
+        # 📉 Dibujamos trayectoria 2D
+        ax1.plot(x, y, color=color, alpha=1.0, linewidth=2, linestyle='-')
+        ax1.scatter(h, k, color=color)
+        punto2d, = ax1.plot([], [], 'o', color=color, markersize=5)
         puntos_2d.append((punto2d, x, y))
 
-        ax2.plot3D(x, y, z, color=colores[idx], alpha=0.5)
-        ax2.scatter(h, k, 0, color=colores[idx])
-        punto3d, = ax2.plot([], [], [], 'o', color=colores[idx], markersize=5)
+        # 📈 Dibujamos trayectoria 3D
+        ax2.plot3D(x, y, z, color=color, alpha=1.0, linewidth=2)
+        ax2.scatter(h, k, 0, color=color)
+        punto3d, = ax2.plot([], [], [], 'o', color=color, markersize=5)
         puntos_3d.append((punto3d, x, y, z))
 
         todas_x.extend(x)
         todas_y.extend(y)
         todas_z.extend(z)
+
 
     ax1.set_title("Múltiples Trayectorias 2D")
     ax1.set_aspect("equal")
