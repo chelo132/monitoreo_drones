@@ -24,11 +24,16 @@ def generar_parametros(rut):
     if grupo_val % 2 == 1:  # Grupo impar
         a = digitos[2] + digitos[3]
         b = digitos[4] + digitos[5]
+        a = min(a, 6)
+        b = min(b, 6)
         orientacion = 'horizontal' if digitos[7] % 2 == 0 else 'vertical'
         grupo_tipo = "IMPAR"
     else:  # Grupo par
         a = digitos[5] + digitos[6]
         b = digitos[7] + digitos[2]
+        a = min(a, 6)
+        b = min(b, 6)
+
         orientacion = 'horizontal' if digitos[3] % 2 == 0 else 'vertical'
         grupo_tipo = "PAR"
 
@@ -306,23 +311,40 @@ def mostrar_ventana_ecuaciones(rut, h, k, a, b, orientacion):
     ctk.CTkButton(ventana, text="Cerrar", command=ventana.destroy).pack(pady=10)
 
 
-def elipses_colisionan(p1, p2):
+def elipses_colisionan(p1, p2, steps=300):
     if not p1 or not p2:
         return False
 
-    h1, k1, a1, b1, *_ = p1
-    h2, k2, a2, b2, *_ = p2
+    h1, k1, a1, b1, orient1, *_ = p1
+    h2, k2, a2, b2, orient2, *_ = p2
 
-    centro1 = np.array([h1, k1])
-    centro2 = np.array([h2, k2])
+    t = np.linspace(0, 2 * np.pi, steps)
 
-    distancia = np.linalg.norm(centro1 - centro2)
+    if orient1 == "horizontal":
+        x1 = h1 + a1 * np.cos(t)
+        y1 = k1 + b1 * np.sin(t)
+    else:
+        x1 = h1 + b1 * np.cos(t)
+        y1 = k1 + a1 * np.sin(t)
 
-    # Aproximación más estricta: usar media geométrica de los semiejes
-    radio1 = np.sqrt(a1 * b1)
-    radio2 = np.sqrt(a2 * b2)
+    if orient2 == "horizontal":
+        x2 = h2 + a2 * np.cos(t)
+        y2 = k2 + b2 * np.sin(t)
+    else:
+        x2 = h2 + b2 * np.cos(t)
+        y2 = k2 + a2 * np.sin(t)
 
-    return distancia < (radio1 + radio2)
+    # Comparar distancia entre todos los puntos
+    for i in range(steps):
+        distancias = np.sqrt((x2 - x1[i]) ** 2 + (y2 - y1[i]) ** 2)
+        if np.any(distancias < 0.5):  # Umbral mínimo de contacto
+            return True
+
+    return False
+
+
+    
+
 
 
 
