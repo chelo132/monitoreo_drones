@@ -306,24 +306,24 @@ def mostrar_ventana_ecuaciones(rut, h, k, a, b, orientacion):
     ctk.CTkButton(ventana, text="Cerrar", command=ventana.destroy).pack(pady=10)
 
 
+def elipses_colisionan(p1, p2):
+    if not p1 or not p2:
+        return False
 
-def elipses_colisionan(params1, params2):
-    h1, k1, a1, b1, orient1, *_ = params1
-    h2, k2, a2, b2, orient2, *_ = params2
+    h1, k1, a1, b1, *_ = p1
+    h2, k2, a2, b2, *_ = p2
 
-    # Distancia entre centros
-    distancia = np.sqrt((h2 - h1) ** 2 + (k2 - k1) ** 2)
+    centro1 = np.array([h1, k1])
+    centro2 = np.array([h2, k2])
 
-    # Radio de seguridad depende de la orientación
-    if orient1 == 'horizontal' and orient2 == 'horizontal':
-        radio_seguridad = a1 + a2
-    elif orient1 == 'vertical' and orient2 == 'vertical':
-        radio_seguridad = b1 + b2
-    else:
-        # Si son diferentes, usar una combinación de ambos
-        radio_seguridad = max(a1, b1) + max(a2, b2)
+    distancia = np.linalg.norm(centro1 - centro2)
 
-    return distancia < radio_seguridad
+    # Aproximación más estricta: usar media geométrica de los semiejes
+    radio1 = np.sqrt(a1 * b1)
+    radio2 = np.sqrt(a2 * b2)
+
+    return distancia < (radio1 + radio2)
+
 
 
 def cerrar_programa():
