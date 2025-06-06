@@ -100,6 +100,10 @@ def agregar_rut():
     if len([c for c in rut if c.isdigit()]) < 8:
         resultado.configure(text="⚠️ RUT inválido (mínimo 8 dígitos numéricos)")
         return
+    if rut in ruts_multiples:
+        import tkinter.messagebox as messagebox
+        messagebox.showwarning("Alerta", "Los RUTs son iguales por ende los drones chocarán")
+        return
     ruts_multiples.append(rut)
     resultado.configure(text=f"✅ RUT agregado: {rut}")
     refresh_rut_list()
@@ -162,6 +166,26 @@ def calcular_intersecciones(p1, p2, steps=300):
 
     return intersecciones_unicas
 
+def mostrar_ventana_intersecciones(intersecciones):
+    ventana = ctk.CTkToplevel()
+    ventana.title("Puntos de Intersección")
+    ventana.geometry("400x300")
+    ventana.resizable(False, False)
+
+    ctk.CTkLabel(ventana, text="📍 Puntos de Intersección Aproximados", font=("Arial", 16, "bold")).pack(pady=10)
+
+    if not intersecciones:
+        ctk.CTkLabel(ventana, text="No se detectaron puntos de intersección.", font=("Arial", 14)).pack(pady=10)
+    else:
+        # Create a scrollable frame for the points
+        scrollable_frame = ctk.CTkScrollableFrame(ventana, width=380, height=200)
+        scrollable_frame.pack(pady=10, padx=10, fill="both", expand=True)
+
+        for x, y in sorted(intersecciones):
+            ctk.CTkLabel(scrollable_frame, text=f"({x}, {y})", font=("Arial", 14), anchor="w").pack(fill="x", padx=5, pady=2)
+
+    ctk.CTkButton(ventana, text="Cerrar", command=ventana.destroy).pack(pady=10)
+
 def animar_multiples_trayectorias(master_frame):
     global canvas, ani
 
@@ -208,8 +232,7 @@ def animar_multiples_trayectorias(master_frame):
             intersecciones_int = set()
             for x, y in intersecciones_totales:
                 intersecciones_int.add((int(round(x)), int(round(y))))
-            puntos_str = "\n".join([f"({x}, {y})" for x, y in sorted(intersecciones_int)])
-            mensaje += f"\nPuntos de intersección aproximados (enteros):\n{puntos_str}"
+            mostrar_ventana_intersecciones(intersecciones_int)
         resultado.configure(text=mensaje)
     else:
         resultado.configure(text="✅ Sin colisiones detectadas entre trayectorias.")
