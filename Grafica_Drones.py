@@ -102,9 +102,7 @@ def agregar_rut():
         return
     ruts_multiples.append(rut)
     resultado.configure(text=f"✅ RUT agregado: {rut}")
-    lista_ruts.configure(state="normal")
-    lista_ruts.insert("end", rut + "\n")
-    lista_ruts.configure(state="disabled")
+    refresh_rut_list()
 
 def obtener_ecuacion_elipse(h, k, a, b, orientacion):
     if orientacion == 'horizontal':
@@ -435,9 +433,42 @@ right_frame.pack(side="left", fill="both", expand=True)
 
 ctk.CTkLabel(master=right_frame, text="RUTs Agregados", font=("Arial", 18), text_color="#d0f0fd").pack(pady=10)
 
-lista_ruts = ctk.CTkTextbox(master=right_frame, width=300, height=300, font=("Arial", 14), fg_color="#1a1a1a", text_color="#d0f0fd")
-lista_ruts.pack(padx=10, pady=10, fill="both", expand=True)
-lista_ruts.configure(state="disabled")
+# Custom selectable list for RUTs using CTkScrollableFrame and CTkLabel
+
+selected_rut_index = None
+
+def refresh_rut_list():
+    for widget in rut_list_container.winfo_children():
+        widget.destroy()
+    for idx, rut in enumerate(ruts_multiples):
+        def on_click(event, index=idx):
+            global selected_rut_index
+            selected_rut_index = index
+            refresh_rut_list()
+        label_color = "#0d6f8f" if idx == selected_rut_index else "#1a1a1a"
+        label_fg = "white" if idx == selected_rut_index else "#d0f0fd"
+        rut_label = ctk.CTkLabel(rut_list_container, text=rut, fg_color=label_color, text_color=label_fg, corner_radius=5, height=30)
+        rut_label.pack(fill="x", pady=2, padx=5)
+        rut_label.bind("<Button-1>", on_click)
+
+rut_list_container = ctk.CTkScrollableFrame(master=right_frame, width=300, height=300, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
+rut_list_container.pack(padx=10, pady=10, fill="both", expand=True)
+
+refresh_rut_list()
+
+def eliminar_rut_seleccionado():
+    global selected_rut_index
+    if selected_rut_index is not None and 0 <= selected_rut_index < len(ruts_multiples):
+        del ruts_multiples[selected_rut_index]
+        selected_rut_index = None
+        refresh_rut_list()
+        resultado.configure(text="✅ RUT eliminado de la lista")
+    else:
+        resultado.configure(text="⚠️ No hay RUT seleccionado para eliminar")
+
+boton_eliminar_rut = ctk.CTkButton(master=right_frame, text="Eliminar RUT seleccionado", command=eliminar_rut_seleccionado,
+                                   fg_color="#a83232", hover_color="#d04040", text_color="#fff")
+boton_eliminar_rut.pack(pady=5)
 
 
 frame_animacion = ctk.CTkFrame(master=frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
