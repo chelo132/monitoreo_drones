@@ -10,7 +10,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 ctk.set_appearance_mode("dark")  # Solo modo oscuro
 ruts_multiples = []
-
+canvas = None
+ani = None
 
 # ---------- Lógica para calcular los parámetros de la elipse ----------
 def generar_parametros(rut):
@@ -38,9 +39,6 @@ def generar_parametros(rut):
         grupo_tipo = "PAR"
 
     return h, k, a, b, orientacion, grupo_tipo, grupo_val
-
-canvas = None
-ani = None
 
 def animar_elipse_2d_3d_embebida(h, k, a, b, orientacion, master_frame):
     global canvas, ani
@@ -130,7 +128,6 @@ def renderizar_latex(enunciado, parent_frame, ancho=6.5, alto=1, fontsize=14):
     widget.pack(pady=5)
 
 def calcular_intersecciones(p1, p2, steps=300):
-    # Calculate intersection points between two ellipses approximated by points
     h1, k1, a1, b1, orient1, *_ = p1
     h2, k2, a2, b2, orient2, *_ = p2
 
@@ -343,23 +340,28 @@ def procesar():
 
     h, k, a, b, orientacion, grupo_tipo, grupo_valor = params
     resultado.configure(
-        text=f"Grupo {grupo_tipo} (d8 = {grupo_valor}) | Centro: ({h},{k}), a = {a}, b = {b}, orientación {orientacion}"
+        text=f"Grupo {grupo_tipo} (d8 = {grupo_valor}) | Centro: ({h},{k}),\n  a = {a}, b = {b}, orientación {orientacion}"
     )
-    ecuacion = obtener_ecuacion_elipse(h, k, a, b, orientacion)
-    label_ecuacion.configure(text=f"Ecuación canónica:\n{ecuacion}")
-
 
     animar_elipse_2d_3d_embebida(h, k, a, b, orientacion, frame_animacion)
     mostrar_ventana_ecuaciones(rut, h, k, a, b, orientacion)
 
 def obtener_ecuaciones_elipse(h, k, a, b, orientacion):
     if orientacion == 'horizontal':
+        if a == 0 or b == 0:
+            error_msg_canonica = r"\text{Error: División por cero en la ecuación canónica}"
+            error_msg_general = r"\text{Error: División por cero en la ecuación general}"
+            return error_msg_canonica, error_msg_general
         canonica = (
             f"\\frac{{(x - {h})^2}}{{{a**2}}} + \\frac{{(y - {k})^2}}{{{b**2}}} = 1"
         )
         A = 1 / a**2
         C = 1 / b**2
     else:
+        if a == 0 or b == 0:
+            error_msg_canonica = r"\text{Error: División por cero en la ecuación canónica}"
+            error_msg_general = r"\text{Error: División por cero en la ecuación general}"
+            return error_msg_canonica, error_msg_general
         canonica = (
             f"\\frac{{(x - {h})^2}}{{{b**2}}} + \\frac{{(y - {k})^2}}{{{a**2}}} = 1"
         )
@@ -443,6 +445,49 @@ def cerrar_programa():
     os._exit(0)
 
 
+def refresh_rut_list():
+    for widget in rut_list_container.winfo_children():
+        widget.destroy()
+    for idx, rut in enumerate(ruts_multiples):
+        def on_click(event, index=idx):
+            global selected_rut_index
+            selected_rut_index = index
+            refresh_rut_list()
+        label_color = "#0d6f8f" if idx == selected_rut_index else "#1a1a1a"
+        label_fg = "white" if idx == selected_rut_index else "#d0f0fd"
+        rut_label = ctk.CTkLabel(rut_list_container, text=rut, fg_color=label_color, text_color=label_fg, corner_radius=5, height=30)
+        rut_label.pack(fill="x", pady=2, padx=5)
+        rut_label.bind("<Button-1>", on_click)
+
+def editar_rut_seleccionado():
+    global selected_rut_index
+    if selected_rut_index is None or not (0 <= selected_rut_index < len(ruts_multiples)):
+        resultado.configure(text="⚠️ No hay RUT seleccionado para editar")
+        return
+
+    def guardar_edicion():
+        nuevo_rut = entry_editar.get()
+        if len([c for c in nuevo_rut if c.isdigit()]) < 8:
+            resultado.configure(text="⚠️ RUT inválido (mínimo 8 dígitos numéricos)")
+            return
+        ruts_multiples[selected_rut_index] = nuevo_rut
+        resultado.configure(text=f"✅ RUT editado: {nuevo_rut}")
+        refresh_rut_list()
+        ventana_editar.destroy()
+
+    ventana_editar = ctk.CTkToplevel()
+    ventana_editar.title("Editar RUT")
+    ventana_editar.geometry("400x150")
+    ventana_editar.resizable(False, False)
+    ctk.CTkLabel(ventana_editar, text="Editar RUT seleccionado:", font=("Arial", 14)).pack(pady=10)
+    entry_editar = ctk.CTkEntry(ventana_editar, width=300, height=30, font=("Arial", 14))
+    entry_editar.pack(pady=5)
+    entry_editar.insert(0, ruts_multiples[selected_rut_index])
+
+    boton_guardar = ctk.CTkButton(ventana_editar, text="Guardar", command=guardar_edicion,
+                                  fg_color="#0d6f8f", hover_color="#1282a2", text_color="#d0f0fd")
+    boton_guardar.pack(pady=10)
+
 root = ctk.CTk()
 root.title("Simulador de Trayectorias de Drones")
 root.geometry("900x800")
@@ -507,20 +552,6 @@ ctk.CTkLabel(master=right_frame, text="RUTs Agregados", font=("Arial", 18), text
 
 selected_rut_index = None
 
-def refresh_rut_list():
-    for widget in rut_list_container.winfo_children():
-        widget.destroy()
-    for idx, rut in enumerate(ruts_multiples):
-        def on_click(event, index=idx):
-            global selected_rut_index
-            selected_rut_index = index
-            refresh_rut_list()
-        label_color = "#0d6f8f" if idx == selected_rut_index else "#1a1a1a"
-        label_fg = "white" if idx == selected_rut_index else "#d0f0fd"
-        rut_label = ctk.CTkLabel(rut_list_container, text=rut, fg_color=label_color, text_color=label_fg, corner_radius=5, height=30)
-        rut_label.pack(fill="x", pady=2, padx=5)
-        rut_label.bind("<Button-1>", on_click)
-
 rut_list_container = ctk.CTkScrollableFrame(master=right_frame, width=300, height=300, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
 rut_list_container.pack(padx=10, pady=10, fill="both", expand=True)
 
@@ -540,35 +571,7 @@ boton_eliminar_rut = ctk.CTkButton(master=right_frame, text="Eliminar RUT selecc
                                    fg_color="#a83232", hover_color="#d04040", text_color="#fff")
 boton_eliminar_rut.pack(pady=5)
 
-def editar_rut_seleccionado():
-    global selected_rut_index
-    if selected_rut_index is None or not (0 <= selected_rut_index < len(ruts_multiples)):
-        resultado.configure(text="⚠️ No hay RUT seleccionado para editar")
-        return
 
-    def guardar_edicion():
-        nuevo_rut = entry_editar.get()
-        if len([c for c in nuevo_rut if c.isdigit()]) < 8:
-            resultado.configure(text="⚠️ RUT inválido (mínimo 8 dígitos numéricos)")
-            return
-        ruts_multiples[selected_rut_index] = nuevo_rut
-        resultado.configure(text=f"✅ RUT editado: {nuevo_rut}")
-        refresh_rut_list()
-        ventana_editar.destroy()
-
-    ventana_editar = ctk.CTkToplevel()
-    ventana_editar.title("Editar RUT")
-    ventana_editar.geometry("400x150")
-    ventana_editar.resizable(False, False)
-
-    ctk.CTkLabel(ventana_editar, text="Editar RUT seleccionado:", font=("Arial", 14)).pack(pady=10)
-    entry_editar = ctk.CTkEntry(ventana_editar, width=300, height=30, font=("Arial", 14))
-    entry_editar.pack(pady=5)
-    entry_editar.insert(0, ruts_multiples[selected_rut_index])
-
-    boton_guardar = ctk.CTkButton(ventana_editar, text="Guardar", command=guardar_edicion,
-                                  fg_color="#0d6f8f", hover_color="#1282a2", text_color="#d0f0fd")
-    boton_guardar.pack(pady=10)
 
 boton_editar_rut = ctk.CTkButton(master=right_frame, text="Editar RUT seleccionado", command=editar_rut_seleccionado,
                                  fg_color="#0d6f8f", hover_color="#1282a2", text_color="#fff")
