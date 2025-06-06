@@ -155,7 +155,6 @@ def calcular_intersecciones(p1, p2, steps=300):
         for idx in close_points:
             intersecciones.append((x1[i], y1[i]))
 
-    # Remove duplicates (approximate)
     intersecciones_unicas = []
     for pt in intersecciones:
         if not any(np.isclose(pt[0], p[0], atol=0.1) and np.isclose(pt[1], p[1], atol=0.1) for p in intersecciones_unicas):
@@ -174,7 +173,7 @@ def mostrar_ventana_intersecciones(intersecciones):
     if not intersecciones:
         ctk.CTkLabel(ventana, text="No se detectaron puntos de intersección.", font=("Arial", 14)).pack(pady=10)
     else:
-        # Create a scrollable frame for the points
+
         scrollable_frame = ctk.CTkScrollableFrame(ventana, width=380, height=200)
         scrollable_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
@@ -202,7 +201,7 @@ def animar_multiples_trayectorias(master_frame):
         return
     
     colormap = plt.get_cmap('viridis')
-    colores = colormap(np.linspace(0, 1, len(ruts_validos))) #hay un error que no afecta al programa debe ser un bug del propio mat asi que de ahi lo veo xD
+    colores = colormap(np.linspace(0, 1, len(ruts_validos))) 
 
     # Detectar colisiones entre pares de elipses
     colisiones = []
@@ -225,7 +224,7 @@ def animar_multiples_trayectorias(master_frame):
             [f"→ {a} y {b}" for a, b in colisiones]
         )
         if intersecciones_totales:
-            # Round intersection points to integers and remove duplicates
+
             intersecciones_int = set()
             for x, y in intersecciones_totales:
                 intersecciones_int.add((int(round(x)), int(round(y))))
@@ -531,8 +530,6 @@ boton_creditos = ctk.CTkButton(master=left_frame, text="Créditos del Proyecto",
                                command=mostrar_ventana_creditos,
                                fg_color="#444", hover_color="#666", text_color="#fff")
 boton_creditos.pack(pady=10)
-
-
 
 boton_agregar_rut = ctk.CTkButton(master=left_frame, text="Agregar RUT a la Lista", command=agregar_rut,
                                   fg_color="#1c7c54", hover_color="#239b66", text_color="#ffffff")
