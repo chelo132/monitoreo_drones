@@ -426,14 +426,11 @@ boton_simular_multiples = ctk.CTkButton(master=left_frame, text="Simular Múltip
 
 boton_simular_multiples.pack(pady=5)
 
-
 right_frame = ctk.CTkFrame(master=container_frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
 right_frame = ctk.CTkFrame(master=container_frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
 right_frame.pack(side="left", fill="both", expand=True)
 
 ctk.CTkLabel(master=right_frame, text="RUTs Agregados", font=("Arial", 18), text_color="#d0f0fd").pack(pady=10)
-
-# Custom selectable list for RUTs using CTkScrollableFrame and CTkLabel
 
 selected_rut_index = None
 
@@ -469,6 +466,40 @@ def eliminar_rut_seleccionado():
 boton_eliminar_rut = ctk.CTkButton(master=right_frame, text="Eliminar RUT seleccionado", command=eliminar_rut_seleccionado,
                                    fg_color="#a83232", hover_color="#d04040", text_color="#fff")
 boton_eliminar_rut.pack(pady=5)
+
+def editar_rut_seleccionado():
+    global selected_rut_index
+    if selected_rut_index is None or not (0 <= selected_rut_index < len(ruts_multiples)):
+        resultado.configure(text="⚠️ No hay RUT seleccionado para editar")
+        return
+
+    def guardar_edicion():
+        nuevo_rut = entry_editar.get()
+        if len([c for c in nuevo_rut if c.isdigit()]) < 8:
+            resultado.configure(text="⚠️ RUT inválido (mínimo 8 dígitos numéricos)")
+            return
+        ruts_multiples[selected_rut_index] = nuevo_rut
+        resultado.configure(text=f"✅ RUT editado: {nuevo_rut}")
+        refresh_rut_list()
+        ventana_editar.destroy()
+
+    ventana_editar = ctk.CTkToplevel()
+    ventana_editar.title("Editar RUT")
+    ventana_editar.geometry("400x150")
+    ventana_editar.resizable(False, False)
+
+    ctk.CTkLabel(ventana_editar, text="Editar RUT seleccionado:", font=("Arial", 14)).pack(pady=10)
+    entry_editar = ctk.CTkEntry(ventana_editar, width=300, height=30, font=("Arial", 14))
+    entry_editar.pack(pady=5)
+    entry_editar.insert(0, ruts_multiples[selected_rut_index])
+
+    boton_guardar = ctk.CTkButton(ventana_editar, text="Guardar", command=guardar_edicion,
+                                  fg_color="#0d6f8f", hover_color="#1282a2", text_color="#d0f0fd")
+    boton_guardar.pack(pady=10)
+
+boton_editar_rut = ctk.CTkButton(master=right_frame, text="Editar RUT seleccionado", command=editar_rut_seleccionado,
+                                 fg_color="#0d6f8f", hover_color="#1282a2", text_color="#fff")
+boton_editar_rut.pack(pady=5)
 
 
 frame_animacion = ctk.CTkFrame(master=frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
