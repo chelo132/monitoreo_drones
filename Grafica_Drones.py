@@ -125,6 +125,42 @@ def renderizar_latex(enunciado, parent_frame, ancho=6.5, alto=1, fontsize=14):
     widget.config(bg="#1a1a1a", highlightthickness=0)  # Combina con el fondo oscuro
     widget.pack(pady=5)
 
+def calcular_intersecciones(p1, p2, steps=300):
+    # Calculate intersection points between two ellipses approximated by points
+    h1, k1, a1, b1, orient1, *_ = p1
+    h2, k2, a2, b2, orient2, *_ = p2
+
+    t = np.linspace(0, 2 * np.pi, steps)
+
+    if orient1 == "horizontal":
+        x1 = h1 + a1 * np.cos(t)
+        y1 = k1 + b1 * np.sin(t)
+    else:
+        x1 = h1 + b1 * np.cos(t)
+        y1 = k1 + a1 * np.sin(t)
+
+    if orient2 == "horizontal":
+        x2 = h2 + a2 * np.cos(t)
+        y2 = k2 + b2 * np.sin(t)
+    else:
+        x2 = h2 + b2 * np.cos(t)
+        y2 = k2 + a2 * np.sin(t)
+
+    intersecciones = []
+
+    for i in range(steps):
+        distancias = np.sqrt((x2 - x1[i]) ** 2 + (y2 - y1[i]) ** 2)
+        close_points = np.where(distancias < 0.5)[0]
+        for idx in close_points:
+            intersecciones.append((x1[i], y1[i]))
+
+    # Remove duplicates (approximate)
+    intersecciones_unicas = []
+    for pt in intersecciones:
+        if not any(np.isclose(pt[0], p[0], atol=0.1) and np.isclose(pt[1], p[1], atol=0.1) for p in intersecciones_unicas):
+            intersecciones_unicas.append(pt)
+
+    return intersecciones_unicas
 
 def animar_multiples_trayectorias(master_frame):
     global canvas, ani
@@ -150,6 +186,7 @@ def animar_multiples_trayectorias(master_frame):
     # Detectar colisiones entre pares de elipses
     colisiones = []
     ruts_en_colision = set()
+    intersecciones_totales = []
 
     for i in range(len(ruts_validos)):
         for j in range(i + 1, len(ruts_validos)):
@@ -159,13 +196,20 @@ def animar_multiples_trayectorias(master_frame):
                 colisiones.append((ruts_validos[i], ruts_validos[j]))
                 ruts_en_colision.add(ruts_validos[i])
                 ruts_en_colision.add(ruts_validos[j])
-
-
+                intersecciones = calcular_intersecciones(p1, p2)
+                intersecciones_totales.extend(intersecciones)
 
     if colisiones:
         mensaje = "⚠️ Colisión detectada entre:\n" + "\n".join(
             [f"→ {a} y {b}" for a, b in colisiones]
         )
+        if intersecciones_totales:
+            # Round intersection points to integers and remove duplicates
+            intersecciones_int = set()
+            for x, y in intersecciones_totales:
+                intersecciones_int.add((int(round(x)), int(round(y))))
+            puntos_str = "\n".join([f"({x}, {y})" for x, y in sorted(intersecciones_int)])
+            mensaje += f"\nPuntos de intersección aproximados (enteros):\n{puntos_str}"
         resultado.configure(text=mensaje)
     else:
         resultado.configure(text="✅ Sin colisiones detectadas entre trayectorias.")
@@ -226,6 +270,10 @@ def animar_multiples_trayectorias(master_frame):
     ax1.grid(True)
     ax1.set_xlim(min(todas_x) - 1, max(todas_x) + 1)
     ax1.set_ylim(min(todas_y) - 1, max(todas_y) + 1)
+
+    from matplotlib.ticker import MaxNLocator
+    ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax1.yaxis.set_major_locator(MaxNLocator(integer=True))
 
     ax2.set_title("Múltiples Trayectorias 3D")
     ax2.set_xlim(min(todas_x) - 1, max(todas_x) + 1)
@@ -328,7 +376,7 @@ def mostrar_ventana_ecuaciones(rut, h, k, a, b, orientacion):
     ctk.CTkButton(ventana, text="Cerrar", command=ventana.destroy).pack(pady=10)
 
 
-def elipses_colisionan(p1, p2, steps=300):
+def elipses_colisionan(p1, p2, steps=300, umbral=0.25):
     if not p1 or not p2:
         return False
 
@@ -351,13 +399,15 @@ def elipses_colisionan(p1, p2, steps=300):
         x2 = h2 + b2 * np.cos(t)
         y2 = k2 + a2 * np.sin(t)
 
-    # Comparar distancia entre todos los puntos
+    # Cálculo de todas las distancias entre cada punto de x1/y1 con todos los de x2/y2
     for i in range(steps):
-        distancias = np.sqrt((x2 - x1[i]) ** 2 + (y2 - y1[i]) ** 2)
-        if np.any(distancias < 0.5):  # Umbral mínimo de contacto
+        distancias = np.sqrt((x2 - x1[i])**2 + (y2 - y1[i])**2)
+        distancia_minima = np.min(distancias)
+        if distancia_minima < umbral:
             return True
 
     return False
+
 
 def cerrar_programa():
     global ani
