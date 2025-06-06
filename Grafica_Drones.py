@@ -200,7 +200,7 @@ def animar_multiples_trayectorias(master_frame):
                 intersecciones_totales.extend(intersecciones)
 
     if colisiones:
-        mensaje = "⚠️ Colisión detectada entre:\n" + "\n".join(
+        mensaje = "⚠️ Posible colisión detectada entre:\n" + "\n".join(
             [f"→ {a} y {b}" for a, b in colisiones]
         )
         if intersecciones_totales:
