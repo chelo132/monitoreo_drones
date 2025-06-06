@@ -374,13 +374,13 @@ root = ctk.CTk()
 root.title("Simulador de Trayectorias de Drones")
 root.geometry("900x800")
 
-frame = ctk.CTkFrame(master=root, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
+frame = ctk.CTkFrame(master=root, corner_radius=10, border_width=2)
 frame.pack(pady=10, padx=10, fill="both", expand=True)
 
-container_frame = ctk.CTkFrame(master=frame, fg_color="#121212", corner_radius=10, border_width=0)
+container_frame = ctk.CTkFrame(master=frame, corner_radius=10, border_width=0)
 container_frame.pack(pady=10, padx=10, fill="x", expand=False)
 
-left_frame = ctk.CTkFrame(master=container_frame, fg_color="#121212", corner_radius=10, border_width=0)
+left_frame = ctk.CTkFrame(master=container_frame, corner_radius=10, border_width=2, border_color="#0d6f8f")
 left_frame.pack(side="left", fill="y", expand=False, padx=(0, 10))
 
 titulo = ctk.CTkLabel(master=left_frame, text="Modelador de Trayectorias de Drones", font=("Arial", 24), text_color="#d0f0fd")
@@ -397,7 +397,7 @@ entry_rut = ctk.CTkEntry(
     text_color="#d0f0fd",
     placeholder_text_color="#7ab8c6"
 )
-entry_rut.pack(pady=10)
+entry_rut.pack(pady=10, padx=10)
 
 boton_generar = ctk.CTkButton(master=left_frame, text="Generar y Animar Trayectoria", command=procesar,
                               fg_color="#0d6f8f", hover_color="#1282a2", text_color="#d0f0fd")
@@ -426,8 +426,8 @@ boton_simular_multiples = ctk.CTkButton(master=left_frame, text="Simular Múltip
 
 boton_simular_multiples.pack(pady=5)
 
-right_frame = ctk.CTkFrame(master=container_frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
-right_frame = ctk.CTkFrame(master=container_frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
+right_frame = ctk.CTkFrame(master=container_frame, corner_radius=10, border_width=2, border_color="#0d6f8f")
+right_frame = ctk.CTkFrame(master=container_frame, corner_radius=10, border_width=2, border_color="#0d6f8f")
 right_frame.pack(side="left", fill="both", expand=True)
 
 ctk.CTkLabel(master=right_frame, text="RUTs Agregados", font=("Arial", 18), text_color="#d0f0fd").pack(pady=10)
@@ -502,8 +502,8 @@ boton_editar_rut = ctk.CTkButton(master=right_frame, text="Editar RUT selecciona
 boton_editar_rut.pack(pady=5)
 
 
-frame_animacion = ctk.CTkFrame(master=frame, fg_color="#121212", corner_radius=10, border_width=2, border_color="#0d6f8f")
-frame_animacion.pack(pady=10, fill="both", expand=True)
+frame_animacion = ctk.CTkFrame(master=frame, corner_radius=10, border_width=2, border_color="#0d6f8f")
+frame_animacion.pack(pady=5,padx=10, fill="both", expand=True)
 
 root.protocol("WM_DELETE_WINDOW", cerrar_programa)
 
