@@ -93,18 +93,49 @@ def animar_elipse_2d_3d_embebida(h, k, a, b, orientacion, master_frame):
 
     ani = animation.FuncAnimation(fig, update, frames=len(t), interval=20, blit=True)
 
+def rut_es_valido(rut):
+    """Valida si el RUT genera una elipse válida (mínimo 8 dígitos, sin indeterminación)"""
+    digitos = [c for c in rut if c.isdigit()]
+    if len(digitos) < 8:
+        return False, "⚠️ RUT inválido (mínimo 8 dígitos numéricos)"
+
+    parametros = generar_parametros(rut)
+    if not parametros:
+        return False, "⚠️ RUT inválido (no se pudieron generar parámetros)"
+
+    _, _, a, b, *_ = parametros
+    if a == b:
+        return False, "⚠️ Indeterminación: semiejes a y b son iguales, RUT no válido para elipse"
+
+    return True, parametros
+
 def agregar_rut():
     rut = entry_rut.get()
-    if len([c for c in rut if c.isdigit()]) < 8:
+    digitos = [c for c in rut if c.isdigit()]
+
+    if len(digitos) < 8:
         resultado.configure(text="⚠️ RUT inválido (mínimo 8 dígitos numéricos)")
         return
+
     if rut in ruts_multiples:
         import tkinter.messagebox as messagebox
         messagebox.showwarning("Alerta", "Los RUTs son iguales por ende los drones chocarán")
         return
+
+    parametros = generar_parametros(rut)
+    if not parametros:
+        resultado.configure(text="⚠️ RUT inválido (no se pudieron generar parámetros)")
+        return
+
+    valido, result = rut_es_valido(rut)
+    if not valido:
+        resultado.configure(text=result)
+        return
+
     ruts_multiples.append(rut)
     resultado.configure(text=f"✅ RUT agregado: {rut}")
     refresh_rut_list()
+
 
 def obtener_ecuacion_elipse(h, k, a, b, orientacion):
     if orientacion == 'horizontal':
@@ -127,7 +158,7 @@ def renderizar_latex(enunciado, parent_frame, ancho=6.5, alto=1, fontsize=14):
     widget.config(bg="#1a1a1a", highlightthickness=0)  # Combina con el fondo oscuro
     widget.pack(pady=5)
 
-def calcular_intersecciones(p1, p2, steps=300):
+def calcular_intersecciones(p1, p2, steps=100):
     h1, k1, a1, b1, orient1, *_ = p1
     h2, k2, a2, b2, orient2, *_ = p2
 
@@ -151,7 +182,7 @@ def calcular_intersecciones(p1, p2, steps=300):
 
     for i in range(steps):
         distancias = np.sqrt((x2 - x1[i]) ** 2 + (y2 - y1[i]) ** 2)
-        close_points = np.where(distancias < 0.5)[0]
+        close_points = np.where(distancias < 10)[0]
         for idx in close_points:
             intersecciones.append((x1[i], y1[i]))
 
@@ -332,12 +363,12 @@ def mostrar_ventana_creditos():
 
 def procesar():
     rut = entry_rut.get()
-    params = generar_parametros(rut)
-    if not params:
-        resultado.configure(text="⚠️ RUT inválido (mínimo 8 dígitos numéricos)")
+    valido, result = rut_es_valido(rut)
+    if not valido:
+        resultado.configure(text=result)
         return
 
-    h, k, a, b, orientacion, grupo_tipo, grupo_valor = params
+    h, k, a, b, orientacion, grupo_tipo, grupo_valor = result
     resultado.configure(
         text=f"Grupo {grupo_tipo} (d8 = {grupo_valor}) | Centro: ({h},{k}),\n  a = {a}, b = {b}, orientación {orientacion}"
     )
@@ -345,27 +376,34 @@ def procesar():
     animar_elipse_2d_3d_embebida(h, k, a, b, orientacion, frame_animacion)
     mostrar_ventana_ecuaciones(rut, h, k, a, b, orientacion)
 
+
 def obtener_ecuaciones_elipse(h, k, a, b, orientacion):
     if orientacion == 'horizontal':
         if a == 0 or b == 0:
             error_msg_canonica = r"\text{Error: División por cero en la ecuación canónica}"
             error_msg_general = r"\text{Error: División por cero en la ecuación general}"
             return error_msg_canonica, error_msg_general
+        A = 1 / a**2
+        C = 1 / b**2
+        if A == C:
+            error_msg_indeterminacion = r"\text{Error: Indeterminación, A y B son iguales}"
+            return error_msg_indeterminacion, error_msg_indeterminacion
         canonica = (
             f"\\frac{{(x - {h})^2}}{{{a**2}}} + \\frac{{(y - {k})^2}}{{{b**2}}} = 1"
         )
-        A = 1 / a**2
-        C = 1 / b**2
     else:
         if a == 0 or b == 0:
             error_msg_canonica = r"\text{Error: División por cero en la ecuación canónica}"
             error_msg_general = r"\text{Error: División por cero en la ecuación general}"
             return error_msg_canonica, error_msg_general
+        A = 1 / b**2
+        C = 1 / a**2
+        if A == C:
+            error_msg_indeterminacion = r"\text{Error: Indeterminación, A y B son iguales}"
+            return error_msg_indeterminacion, error_msg_indeterminacion
         canonica = (
             f"\\frac{{(x - {h})^2}}{{{b**2}}} + \\frac{{(y - {k})^2}}{{{a**2}}} = 1"
         )
-        A = 1 / b**2
-        C = 1 / a**2
 
     D = -2 * A * h
     E = -2 * C * k
@@ -466,13 +504,16 @@ def editar_rut_seleccionado():
 
     def guardar_edicion():
         nuevo_rut = entry_editar.get()
-        if len([c for c in nuevo_rut if c.isdigit()]) < 8:
-            resultado.configure(text="⚠️ RUT inválido (mínimo 8 dígitos numéricos)")
+        valido, result = rut_es_valido(nuevo_rut)
+        if not valido:
+            resultado.configure(text=result)
             return
+    
         ruts_multiples[selected_rut_index] = nuevo_rut
         resultado.configure(text=f"✅ RUT editado: {nuevo_rut}")
         refresh_rut_list()
         ventana_editar.destroy()
+
 
     ventana_editar = ctk.CTkToplevel()
     ventana_editar.title("Editar RUT")
@@ -567,7 +608,6 @@ def eliminar_rut_seleccionado():
 boton_eliminar_rut = ctk.CTkButton(master=right_frame, text="Eliminar RUT seleccionado", command=eliminar_rut_seleccionado,
                                    fg_color="#a83232", hover_color="#d04040", text_color="#fff")
 boton_eliminar_rut.pack(pady=5)
-
 
 
 boton_editar_rut = ctk.CTkButton(master=right_frame, text="Editar RUT seleccionado", command=editar_rut_seleccionado,
